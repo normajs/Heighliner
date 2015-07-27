@@ -25,7 +25,7 @@ Kuberenetes is Greek for "the pilot or steersman of a ship," or, metaphorically,
 
 
 ### Related Projects
-(Guild)[https://github.com/normajs/Guild] - Navigator management tool
-(Norma)[https://github.com/normajs/Norma] - Automated asset pipeline built on node
-(Junction)[https://github.com/normajs/Junction] - Client Side Javascript Library with helpers and plugin systems
-(Junction-framework)[https://github.com/normajs/Junction-framework] - CSS layout framework for the Junction library
+[Guild](https://github.com/normajs/Guild) - Navigator management tool
+[Norma](https://github.com/normajs/Norma) - Automated asset pipeline built on node
+[Junction](https://github.com/normajs/Junction) - Client Side Javascript Library with helpers and plugin systems
+[Junction-framework](https://github.com/normajs/Junction-framework) - CSS layout framework for the Junction library
