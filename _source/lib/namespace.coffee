@@ -15,6 +15,7 @@ if Meteor.isServer
       self.name = name
       self.workersOnlineCallbacks = []
       self.workerOnlineCallbacks = []
+      self.clusterOnline = false
 
       self.cluster = new Heighliner._cluster({count: 2})
 
@@ -46,6 +47,8 @@ if Meteor.isServer
 
       self = @
       self.navigator = new Heighliner.navigator(self)
+
+
 
     ###
 
@@ -138,7 +141,6 @@ if Meteor.isServer
       process.on "SIGTERM", Meteor.bindEnvironment(mayday)
       process.on "SIGINT", Meteor.bindEnvironment(mayday)
 
-
     sendOrders: (order) ->
 
       self = @
@@ -185,6 +187,7 @@ if Meteor.isServer
         changed: (id, fields) ->
 
           if fields.workers?.length is self.cluster.count()
+            self.clusterOnline = true
             for cb in self.workersOnlineCallbacks by -1
               cb.call self
 
@@ -210,6 +213,7 @@ if Meteor.isServer
       self.workersOnlineCallbacks.push callback
 
 
+
     ###
 
       Workers
@@ -220,8 +224,6 @@ if Meteor.isServer
       self = @
 
       self.workerOnlineCallbacks.push callback
-
-
 
     comeOnline: (ship) ->
 
@@ -240,10 +242,6 @@ if Meteor.isServer
 
       for cb in self.workerOnlineCallbacks by -1
         cb.call self
-
-
-
-
 
     getOrders: ->
       if not @.isWorker

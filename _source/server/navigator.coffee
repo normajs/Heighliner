@@ -30,6 +30,28 @@ class Navigator
         self.watchShip(heighliner.fleet())
 
 
+  loadBalence: (id) ->
+
+    self = @
+    workers = self.heighliner.workers()
+
+    if id
+      ids = [id]
+    else
+      ids = self.ids
+
+    for doc in ids
+      worker = Random.choice workers
+      Heighliner.flightplans.update(doc, {
+        $set:
+          worker: self.workerPlusShip(worker)
+        },
+        (err, count) ->
+          # async the update
+          if err then throw new Meteor.error err
+      )
+
+
   loadPassengers: (name) ->
 
     self = @
@@ -43,16 +65,7 @@ class Navigator
 
 
     self.heighliner.workersReady ->
-      workers = self.heighliner.workers()
-
-      for doc in self.ids
-        worker = Random.choice workers
-        # workerName = 
-        Heighliner.flightplans.update(doc, {
-          $set:
-            worker: self.workerPlusShip(worker)
-          })
-
+      self.loadBalence()
 
 
     self.initalized = false
@@ -74,7 +87,6 @@ class Navigator
     self = @
 
     self.heighliner.workerReady ->
-
 
       query = Heighliner.flightplans.find({
         heighliner: name
@@ -99,9 +111,9 @@ class Navigator
         changed: changed
       })
 
-      query.observe({
-        removed: removed
-      })
+      # query.observe({
+      #   removed: removed
+      # })
 
 
   storeIds: (id) ->
@@ -115,12 +127,19 @@ class Navigator
       Heighliner.flightplans.update(id, {
         $set:
           observed: true
-        })
+        },
+        (err, count) ->
+          # async the update
+          if err then throw new Meteor.error err
+      )
 
       return
 
     if fields.observed and fields.complete
-      Heighliner.flightplans.remove id
+      Heighliner.flightplans.remove id, (err, count) ->
+        # async the update
+        if err then throw new Meteor.error err
+
 
 
   added: (id, fields) ->
@@ -129,37 +148,18 @@ class Navigator
     # app is first time starting up. We push all ids
     # of needed fligtplans to an array and once a worker
     # comes online, they get to start chewing away at them
-    if not self.initalized and not fields.observed
+    if not self.heighliner.clusterOnline and not fields.observed
       self.storeIds id
       return
 
-    # if not fields.observed
-    #
-    #   workers = self.heighliner.getWorkers()
-    #   console.log workers
-      # singular thread the action
-      # if fields.worker
-      #   return
-    #
-    #   Heighliner.flightplans.update(fields._id, {
-    #     $set:
-    #       observed: true
-    #       worker: self.worker
-    #     })
-    #
-    #   return
-    #
-    # # singular thread the action
-    # if fields.worker and fields.worker isnt self.worker
-    #   return
-    #
-    #
-    # if fields.observed and fields.complete
-    #   Heighliner.flightplans.remove fields._id
+
+    if not fields.observed
+      self.loadBalence(id)
+      return
+
 
 
   changed: (id, fields) ->
-    console.log id, fields
     # action is doc being observed
     if fields.observed is true
 
@@ -167,20 +167,27 @@ class Navigator
       Heighliner.flightplans.update(id, {
         $set:
           complete: true
-        })
+        },
+        (err, count) ->
+          # async the update
+          if err then throw new Meteor.error err
+      )
 
       return
 
     # action is doc being complete
     if fields.complete is true
-      Heighliner.flightplans.remove id
+      Heighliner.flightplans.remove id, (err, count) ->
+        # async the update
+        if err then throw new Meteor.error err
+
       return
 
 
-  removed: (fields) ->
-    self = @
-    if fields?.worker is self.workerPlusShip()
-      console.log fields._id
+  # removed: (fields) ->
+  #   self = @
+  #   if fields?.worker is self.workerPlusShip()
+  #     self.heighliner.log fields._id
 
 
 
