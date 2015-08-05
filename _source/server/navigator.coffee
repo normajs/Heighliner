@@ -74,6 +74,7 @@ class Navigator
     })
     self.initalized = true
 
+
   workerPlusShip: (worker) ->
     self = @
 
@@ -101,19 +102,11 @@ class Navigator
         args = _.values(arguments)
         self.changed.apply self, args
 
-      removed = ->
-        args = _.values(arguments)
-        self.removed.apply self, args
-
 
       query.observeChanges({
         added: added
         changed: changed
       })
-
-      # query.observe({
-      #   removed: removed
-      # })
 
 
   storeIds: (id) ->
@@ -135,10 +128,6 @@ class Navigator
 
       return
 
-    if fields.observed and fields.complete
-      Heighliner.flightplans.remove id, (err, count) ->
-        # async the update
-        if err then throw new Meteor.error err
 
 
 
@@ -160,34 +149,42 @@ class Navigator
 
 
   changed: (id, fields) ->
+
+    self = @
     # action is doc being observed
     if fields.observed is true
 
-      # fake action
-      Heighliner.flightplans.update(id, {
-        $set:
-          complete: true
-        },
-        (err, count) ->
+      console.log id
+      manifest = Heighliner.flightplans.findOne(id, {
+        fields:
+          manifest: true
+      })
+
+      manifest or= {}
+      manifest = manifest.manifest
+
+      actions = self.heighliner.manifestActions
+
+      land = (err, result) ->
+
+        Heighliner.flightplans.update(id, {
+          $set:
+            complete: true
+        }, (err, count) ->
           # async the update
           if err then throw new Meteor.error err
-      )
+        )
 
-      return
+        return
 
-    # action is doc being complete
-    if fields.complete is true
-      Heighliner.flightplans.remove id, (err, count) ->
-        # async the update
-        if err then throw new Meteor.error err
+      if actions.length
 
-      return
+        for cb in actions by -1
+          cb.call self.heighliner, id, manifest, land
 
+      else
+        deletePlan null
 
-  # removed: (fields) ->
-  #   self = @
-  #   if fields?.worker is self.workerPlusShip()
-  #     self.heighliner.log fields._id
 
 
 

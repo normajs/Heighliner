@@ -13,11 +13,18 @@ if Meteor.isServer
 
       self = @
       self.name = name
+
+      # master
       self.workersOnlineCallbacks = []
-      self.workerOnlineCallbacks = []
       self.clusterOnline = false
 
-      self.cluster = new Heighliner._cluster({count: 2})
+      # workers
+      self.workerOnlineCallbacks = []
+      self.manifestActions = []
+
+      # utility
+      self.cluster = new Heighliner._cluster()
+      self.plans = Heighliner.flightplans
 
       if cluster.isMaster
         # create a new ship
@@ -43,6 +50,7 @@ if Meteor.isServer
       args = _.values(arguments)
       self = @
       self.cluster.log.apply self.cluster, args
+
     loadNavigator: ->
 
       self = @
@@ -186,7 +194,7 @@ if Meteor.isServer
       query.observeChanges({
         changed: (id, fields) ->
 
-          if fields.workers?.length is self.cluster.count()
+          if fields?.workers?.length is self.cluster.count()
             self.clusterOnline = true
             for cb in self.workersOnlineCallbacks by -1
               cb.call self
@@ -275,6 +283,13 @@ if Meteor.isServer
       self = @
       self.cluster.startupWorker cb
 
+    process: (cb) ->
+      self = @
+
+      if self.isMaster
+        return
+
+      self.manifestActions.push cb
 
 
   `
