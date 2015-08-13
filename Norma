@@ -19,6 +19,5 @@ tasks:
       use:
         "meteor-platform@=1.2.2": "server"
         "aldeed:collection2@=2.3.3": "server"
-        "meteorhacks:npm": "server"
       export:
         "Heighliner": "server"

@@ -21,6 +21,7 @@ if Meteor.isServer
       # workers
       self.workerOnlineCallbacks = []
       self.manifestActions = []
+      self.workerOnline = false
 
       # utility
       self.cluster = new Heighliner._cluster()
@@ -165,42 +166,45 @@ if Meteor.isServer
 
       self = @
 
-      if self.cluster.online
-        return
+      Meteor.startup ->
 
-      # async protection
-      bindWorker = (worker) ->
-        worker.on("message", (msg) ->
-          if msg?.online
-            worker.send({
-              ship: self.id
-              worker: msg.id
-            })
-        )
+        if self.cluster.online
+          return
 
-
-      # prior to the ship taking flight, we need to bind the workers
-      # to pick a thread and come online
-      self.startup ->
-
-        for id, worker of cluster.workers
-          bindWorker worker
+        # async protection
+        bindWorker = (worker) ->
+          worker.on("message", (msg) ->
+            if msg?.online
+              worker.send({
+                ship: self.id
+                worker: msg.id
+              })
+          )
 
 
-      # we bind a reactive watch on the ship to
-      # execute callbacks once all workers are attached
-      query = Heighliner.ships.find(self.id)
+        # prior to the ship taking flight, we need to bind the workers
+        # to pick a thread and come online
+        self.startup ->
 
-      query.observeChanges({
-        changed: (id, fields) ->
+          for id, worker of cluster.workers
+            bindWorker worker
 
-          if fields?.workers?.length is self.cluster.count()
-            self.clusterOnline = true
-            for cb in self.workersOnlineCallbacks by -1
-              cb.call self
 
-      })
-      self.cluster.startup()
+        # we bind a reactive watch on the ship to
+        # execute callbacks once all workers are attached
+        query = Heighliner.ships.find(self.id)
+
+        query.observeChanges({
+          changed: (id, fields) ->
+
+            if fields?.workers?.length is self.cluster.count()
+              self.clusterOnline = true
+              for cb in self.workersOnlineCallbacks by -1
+                cb.call self
+
+        })
+        self.cluster.startup()
+
 
     workers: ->
       if not @.isMaster
@@ -229,15 +233,21 @@ if Meteor.isServer
     ###
 
     workerReady: (callback) ->
+
       self = @
 
-      self.workerOnlineCallbacks.push callback
+      if self.workerOnline
+        callback null
+      else
+        self.workerOnlineCallbacks.push callback
+
+
 
     comeOnline: (ship) ->
-
       self = @
       ship = Heighliner.ships.findOne(ship)
       self.id = ship._id
+      self.workerOnline = true
 
       Heighliner.ships.update({
         _id: ship._id
@@ -250,6 +260,7 @@ if Meteor.isServer
 
       for cb in self.workerOnlineCallbacks by -1
         cb.call self
+
 
     getOrders: ->
       if not @.isWorker
@@ -291,7 +302,7 @@ if Meteor.isServer
 
       self.manifestActions.push cb
 
-
+      
   `
   Heighliner = _heighliner
   `

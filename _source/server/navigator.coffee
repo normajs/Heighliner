@@ -10,6 +10,7 @@ originalCount = 0
 class Navigator
 
   constructor: (heighliner) ->
+
     if not heighliner
       throw new Meteor.Error("Heighliner is required")
       return
@@ -23,9 +24,7 @@ class Navigator
     if self.heighliner.isMaster
       self.loadPassengers(heighliner.fleet())
 
-
     else
-
       heighliner.balance ->
         self.watchShip(heighliner.fleet())
 
@@ -55,6 +54,7 @@ class Navigator
   loadPassengers: (name) ->
 
     self = @
+
     query = Heighliner.flightplans.find({
       heighliner: name
     })
@@ -154,7 +154,6 @@ class Navigator
     # action is doc being observed
     if fields.observed is true
 
-      console.log id
       manifest = Heighliner.flightplans.findOne(id, {
         fields:
           manifest: true
@@ -183,7 +182,7 @@ class Navigator
           cb.call self.heighliner, id, manifest, land
 
       else
-        deletePlan null
+        land null
 
 
 

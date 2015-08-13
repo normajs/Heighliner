@@ -33,7 +33,8 @@ class FlightPlan
         heighliner: plan.heighliner
         name: plan.name
       })
-      if currentPlane
+
+      if currentPlane and not currentPlane.complete
         flightPlanDoc = currentPlane._id
         self.id = flightPlanDoc
         self.trackPlan flightPlanDoc
@@ -43,7 +44,6 @@ class FlightPlan
 
     self.collection.insert plan, (err, id) ->
 
-      self.id = id
       self.trackPlan id
 
 
@@ -62,14 +62,14 @@ class FlightPlan
     })
 
 
-  removePlan: ->
+  removePlan: (id) ->
     self = @
-    id = self.id
 
     self.collection.remove(id, (err, count) ->
       if err
         throw new Meteor.Error err
     )
+
 
     self.handle.stop()
 
@@ -83,14 +83,14 @@ class FlightPlan
       return
 
     if not self.landedCallbacks.length
-      self.removePlan()
+      self.removePlan(newDoc._id)
       return
 
 
     for cb in self.landedCallbacks by -1
-      cb.call self, self.id, newDoc.manifest
+      cb.call self, newDoc._id, newDoc.manifest
 
-    self.removePlan()
+    self.removePlan(newDoc._id)
 
 
 
