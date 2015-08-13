@@ -17,6 +17,7 @@ class FlightPlan
     self.plan = plan
     self.collection = Heighliner.flightplans
     self.landedCallbacks = []
+    self.landed = false
 
     # actions
     self.sendPlan plan
@@ -34,10 +35,8 @@ class FlightPlan
         name: plan.name
       })
 
-      if currentPlane and not currentPlane.complete
-        flightPlanDoc = currentPlane._id
-        self.id = flightPlanDoc
-        self.trackPlan flightPlanDoc
+      if currentPlane
+        self.landed = true
 
         return
 
@@ -77,6 +76,7 @@ class FlightPlan
   land: (newDoc, oldDoc) ->
 
     self = @
+    self.landed = true
 
     # saftey net
     if not newDoc.complete
@@ -96,7 +96,14 @@ class FlightPlan
 
 
   landed: (cb) ->
-    @.landedCallbacks.push cb
+
+    self = @
+
+    if self.landed
+      cb false
+      return
+
+    self.landedCallbacks.push cb
 
 
 
