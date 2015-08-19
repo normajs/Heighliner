@@ -4,9 +4,7 @@
   The navigator class provides the tailing
 
 ###
-time = 0
-count = 0
-originalCount = 0
+
 class Navigator
 
   constructor: (heighliner) ->
@@ -44,6 +42,7 @@ class Navigator
       Heighliner.flightplans.update(doc, {
         $set:
           worker: self.workerPlusShip(worker)
+          observed: true
         },
         (err, count) ->
           # async the update
@@ -86,25 +85,26 @@ class Navigator
   watchShip: (name) ->
 
     self = @
-
     self.heighliner.workerReady ->
 
       query = Heighliner.flightplans.find({
         heighliner: name
         worker: self.workerPlusShip()
+      }, fields: {
+        observed: 1
+        manifest: 1
       })
 
-      added = ->
-        args = _.values(arguments)
-        self.workerAdded.apply self, args
+      # added = ->
+      #   args = _.values(arguments)
+      #   self.workerAdded.apply self, args
 
       changed = ->
         args = _.values(arguments)
         self.changed.apply self, args
 
-
       query.observeChanges({
-        added: added
+        added: changed
         changed: changed
       })
 
@@ -149,18 +149,12 @@ class Navigator
 
 
   changed: (id, fields) ->
-
     self = @
     # action is doc being observed
     if fields.observed is true
 
-      manifest = Heighliner.flightplans.findOne(id, {
-        fields:
-          manifest: true
-      })
 
-      manifest or= {}
-      manifest = manifest.manifest
+      manifest = fields.manifest
 
       actions = self.heighliner.manifestActions
 

@@ -10,6 +10,7 @@
   "license": "MIT",
   "dependencies": {
     "norma-javascript": "^0.4.7",
-    "norma-meteor-load": "^0.2.2"
+    "norma-meteor-load": "^0.2.2",
+    "norma-meteor": "^0.3.18"
   }
 }

@@ -25,6 +25,9 @@ shipSchema = new SimpleSchema({
   online:
     type: Boolean
     defaultValue: false
+  endpoint:
+    type: String
+    optional: false
 })
 
 Heighliner.ships.attachSchema shipSchema

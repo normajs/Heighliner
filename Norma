@@ -19,5 +19,8 @@ tasks:
       use:
         "meteor-platform@=1.2.2": "server"
         "aldeed:collection2@=2.3.3": "server"
+        "http@=1.1.0": "server"
+      npm:
+        "mongodb": "2.0.41"
       export:
         "Heighliner": "server"

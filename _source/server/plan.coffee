@@ -17,7 +17,7 @@ class FlightPlan
     self.plan = plan
     self.collection = Heighliner.flightplans
     self.landedCallbacks = []
-    self.landed = false
+    self.finished = false
 
     # actions
     self.sendPlan plan
@@ -36,7 +36,7 @@ class FlightPlan
       })
 
       if currentPlane
-        self.landed = true
+        self.finished = true
 
         return
 
@@ -99,7 +99,7 @@ class FlightPlan
 
     self = @
 
-    if self.landed
+    if self.finished
       cb false
       return
 

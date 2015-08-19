@@ -72,83 +72,40 @@ if Meteor.isServer
 
       self = @
 
-      ###
-
-        Ships can come and go. We first look to see if any
-        ships are offline and we activate their spot in their
-        fleet with this ship.
-
-      ###
-      ship = Heighliner.ships.findOne({
-        fleet: name
-        online: false
-      })
-
-
-      # the number of cores on this instance will inform how
-      # many bays of cargo this ship can carry
-      # each bay (worker) will get a new id once the worker starts
-      # we wipe each ships workers on creation
-      bays = []
-
-
-      # ships are disposable so lets give this one a new name
-      shipName = Random.id()
-
-
-      # we have a ship in the docks ready for flightplans
-      # lets assume the identity, wipe its workers, and bring
-      # it online
-      if ship
-
-        # store a reference to this ship on the master class
-        self.id = ship._id
-
-
-        # launch the ship into service, may she serve proudly
-        Heighliner.ships.update(ship._id, {
-          $set:
-            online: true
-            name: shipName
-            workers: bays
-        })
-        self.bindStatusReport self.id
-        return
 
       # looks like the fleet is all engaged, lets christen a
       # new ship for flight
-      ship = Heighliner.ships.insert({
-        fleet: name
-        name: shipName
-        online: true
-        workers: bays
-      })
+      ship = Heighliner.armada.enlist(name, (id) ->
 
-      self.id = ship
-      self.bindStatusReport self.id
+          self.id = ship
+          # self.bindStatusReport self.id
 
-    bindStatusReport: (id) ->
-
-      if not id then return
-
-      mayday = ->
-        Heighliner.ships.update(id, {
-          $set:
-            online: false
-        })
-
-        process.exit()
+      )
 
 
-      ###
 
-        This acts as our 1st line of health check. If a ship is going offline
-        it logs a mayday and sets its status to offline. May it rest in
-        peace in that shipyard in the sky
-
-      ###
-      process.on "SIGTERM", Meteor.bindEnvironment(mayday)
-      process.on "SIGINT", Meteor.bindEnvironment(mayday)
+    # bindStatusReport: (id) ->
+    #
+    #   if not id then return
+    #
+    #   mayday = ->
+    #     Heighliner.ships.update(id, {
+    #       $set:
+    #         online: false
+    #     })
+    #
+    #     process.exit()
+    #
+    #
+    #   ###
+    #
+    #     This acts as our 1st line of health check. If a ship is going offline
+    #     it logs a mayday and sets its status to offline. May it rest in
+    #     peace in that shipyard in the sky
+    #
+    #   ###
+    #   process.on "SIGTERM", Meteor.bindEnvironment(mayday)
+    #   process.on "SIGINT", Meteor.bindEnvironment(mayday)
 
     sendOrders: (order) ->
 
@@ -297,12 +254,12 @@ if Meteor.isServer
     process: (cb) ->
       self = @
 
-      if self.isMaster
-        return
+      # if self.isMaster
+      #   return
 
       self.manifestActions.push cb
 
-      
+
   `
   Heighliner = _heighliner
   `
